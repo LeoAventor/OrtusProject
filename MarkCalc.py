@@ -1,5 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from decouple import config
 
 
@@ -14,7 +16,7 @@ password_field.send_keys(config('password'))
 submit_button = driver.find_element(By.NAME, "Login.Submit")
 submit_button.click()
 driver.get("https://estudijas.rtu.lv/my/")
-visible_course_div = driver.find_element(By.XPATH, "//div[@class='course_div' and not(@style='display: none;')]")
+visible_course_div = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, "//div[@class='course_div' and not(@style='display: none;')]")))
 course_links = visible_course_div.find_elements(By.TAG_NAME, "a")
 
 for link in course_links:
