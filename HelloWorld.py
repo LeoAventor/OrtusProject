@@ -1,1 +1,24 @@
-print("Hello World!")
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from decouple import config
+
+
+driver = webdriver.Firefox()
+
+driver.get("https://id2.rtu.lv/openam/UI/Login?module=LDAP&locale=lv")
+
+login_field = driver.find_element(By.ID, "IDToken1")
+password_field = driver.find_element(By.ID, "IDToken2")
+login_field.send_keys(config('login_name'))
+password_field.send_keys(config('password'))
+submit_button = driver.find_element(By.NAME, "Login.Submit")
+submit_button.click()
+driver.get("https://estudijas.rtu.lv/my/")
+visible_course_div = driver.find_element(By.XPATH, "//div[@class='course_div' and not(@style='display: none;')]")
+course_links = visible_course_div.find_elements(By.TAG_NAME, "a")
+
+for link in course_links:
+    course_url = link.get_attribute("href")
+    driver.get(course_url)
+
+#driver.quit()
