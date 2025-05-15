@@ -19,7 +19,7 @@ password_field.send_keys(os.environ.get("password"))
 submit_button = driver.find_element(By.NAME, "Login.Submit")
 submit_button.click()
 driver.get("https://estudijas.rtu.lv/my/")
-visible_course_div = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, "//div[@class='course_div' and not(@style='display: none;')]")))
+#visible_course_div = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, "//div[@class='course_div' and not(@style='display: none;')]")))
 course_links = visible_course_div.find_elements(By.TAG_NAME, "a")
 
 for link in course_links:
@@ -27,3 +27,11 @@ for link in course_links:
     driver.get(course_url)
 
 #driver.quit()
+
+
+# Datu struktūras un algoritmi: https://estudijas.rtu.lv/course/view.php?id=680502
+# Diskrētā matemātika: https://estudijas.rtu.lv/course/view.php?id=695121
+# Fizika: https://estudijas.rtu.lv/course/view.php?id=680310
+# Matemātika: https://estudijas.rtu.lv/course/view.php?id=680369
+# OOP: https://estudijas.rtu.lv/course/view.php?id=680366
+# Vides un klimata ceļvedis: https://estudijas.rtu.lv/course/view.php?id=680306
