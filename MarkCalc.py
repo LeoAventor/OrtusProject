@@ -1,18 +1,21 @@
+import os
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from decouple import config
+from dotenv import load_dotenv
 
 
 driver = webdriver.Firefox()
 
 driver.get("https://id2.rtu.lv/openam/UI/Login?module=LDAP&locale=lv")
 
+load_dotenv()
+
 login_field = driver.find_element(By.ID, "IDToken1")
 password_field = driver.find_element(By.ID, "IDToken2")
-login_field.send_keys(config('login_name'))
-password_field.send_keys(config('password'))
+login_field.send_keys(os.environ.get("login_name"))
+password_field.send_keys(os.environ.get("password"))
 submit_button = driver.find_element(By.NAME, "Login.Submit")
 submit_button.click()
 driver.get("https://estudijas.rtu.lv/my/")
