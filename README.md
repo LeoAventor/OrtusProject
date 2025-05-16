@@ -9,3 +9,5 @@ jāaprēķina gala atzīmes, izmantojot grades vārdnīcu. (Atsevišķas metodas
 jāuztaisa metodi, kura ieraksta visus objektus teksta failā, ar kursa nosaukumu, gala vērtējumu. Turpat beigās jāieraksta kopējo vidējo atzīmi.
 jāuztaisa avg funkciju priekš visu objektu vidējās atzīmes.
 pēdējiem soļiem, iespējams, vajadzēs izveidot masīvu ar Course klases objektiem.
+
+#### Jāapraksta programmas darbību šajā failā))))
