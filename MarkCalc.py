@@ -30,12 +30,16 @@ course_links = ["https://estudijas.rtu.lv/course/view.php?id=680502",
 for link in course_links:
     driver.get(link)
 
+grade_links = ["https://estudijas.rtu.lv/grade/report/user/index.php?id=680502",
+               "https://estudijas.rtu.lv/grade/report/user/index.php?id=695121",
+               "https://estudijas.rtu.lv/grade/report/user/index.php?id=680310",
+               "https://estudijas.rtu.lv/grade/report/user/index.php?id=680369",
+               "https://estudijas.rtu.lv/grade/report/user/index.php?id=680366",
+               " https://estudijas.rtu.lv/grade/report/user/index.php?id=680306"]
+
+for link  in grade_links:
+    driver.get(link)
+
 #driver.quit()
 
 
-# Datu struktūras un algoritmi: https://estudijas.rtu.lv/course/view.php?id=680502
-# Diskrētā matemātika: https://estudijas.rtu.lv/course/view.php?id=695121
-# Fizika: https://estudijas.rtu.lv/course/view.php?id=680310
-# Matemātika: https://estudijas.rtu.lv/course/view.php?id=680369
-# OOP: https://estudijas.rtu.lv/course/view.php?id=680366
-# Vides un klimata ceļvedis: https://estudijas.rtu.lv/course/view.php?id=680306
