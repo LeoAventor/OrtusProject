@@ -35,10 +35,6 @@ grade_links = ["https://estudijas.rtu.lv/grade/report/user/index.php?id=680502",
                "https://estudijas.rtu.lv/grade/report/user/index.php?id=680366",
                "https://estudijas.rtu.lv/grade/report/user/index.php?id=680306"]
 
-for link in grade_links:
-    driver.get(link)
-    atzimes=driver.find_elements(By.CLASS_NAME, "cat_579793")
-
 
 #driver.quit()
 
@@ -46,13 +42,13 @@ class Course:
     def __init__(self, url, classname):
         self.url = url
         self.classname = classname
-        self.name = self.get_name(url)
-        self.grades = self.get_grades(classname)
-        self.final_mark = self.get_final(self.grades, self.name)
+        self.name = self.get_name()
+        self.grades = self.get_grades()
+        self.final = self.get_final()
 
-    def get_grades(self, classname):
+    def get_grades(self):
         grade_table = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.CLASS_NAME, classname))
+            EC.presence_of_element_located((By.CLASS_NAME, self.classname))
         )
         rows = grade_table.find_elements(By.CSS_SELECTOR, "tr")
         
@@ -69,12 +65,25 @@ class Course:
                 continue
         return grades
     
-    def get_final(self, grades, name):
-        final = 0
+    def get_final(self):
+        match self.name:
+            case "Fizika":
+                final = self.final_fizika()
+            case "Matemātika":
+                final = self.final_matematika()
+            case "OOP":
+                final = self.final_OOP()
+            case _:
+                final = 0
+        return final
 
-    def get_name(self, url):
+    def get_name(self):
         driver.get("https://estudijas.rtu.lv/my/index.php")
         name = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, f"//a[@href='{url}']"))
+            EC.presence_of_element_located((By.XPATH, f"//a[@href='{self.url}']"))
         ).text
         return name
+
+    def final_fizika(self):
+        final = 0
+        return final
