@@ -1,2 +1,3 @@
 Course Name                    | Final Grade
 ------------------------------------------------------------
+Datu struktūras un algoritmi(1) (DE0918)          0.0

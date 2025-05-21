@@ -35,8 +35,6 @@ class Course:
         self.name = self.get_name()
         self.code = self.get_code()
         self.grades = self.get_grades()
-        #self.final = self.get_final()
-        self.final = 0.0
 
 
     def get_name(self):
@@ -48,10 +46,8 @@ class Course:
     
     def get_grades(self):
         driver.get(f"https://estudijas.rtu.lv/grade/report/user/index.php?id={self.id}")
-        grade_table = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.CLASS_NAME, self.classname))
-        )
-        rows = grade_table.find_elements(By.TAG_NAME, "tr")
+        rows = driver.find_elements(By.CLASS_NAME, self.classname)
+        print(grade_table)
         
         grades = {}
 
@@ -60,16 +56,17 @@ class Course:
                 label = row.find_element(By.CLASS_NAME, "gradeitemheader").text.strip()
                 grade_text = WebDriverWait(driver, 10).until(
                     EC.presence_of_element_located((By.XPATH, "//*[@headers='grade']"))
-                ).strip()
+                ).text.strip()
+                print(label, grade_text)
                 if grade_text=="Ieskaitīts":
                     grade = 10.0
                 else:
                     grade = float(grade_text.replace(',', '.')) if grade_text else 0.0
                 grades[label] = grade
-            except:
-                continue
+            except Exception as e:
+                print(e)
         driver.get("https://ortus.rtu.lv/f/u108l1s22/normal/render.uP?pCt=rtu-eusso-studijas-info.u108l1n151")
-        driver.find_element(By.XPATH, f"//a[@href='https://ortus.rtu.lv/f/u108l1s22/p/rtu-eusso-studijas-info.u108l1n151/normal/action.uP?pP_action=info&pP_page=6']").click()
+        driver.find_element(By.XPATH, f"//a[@href='/f/u108l1s22/p/rtu-eusso-studijas-info.u108l1n151/normal/action.uP?pP_action=info&pP_page=6']").click()
         try:
             grade_table = WebDriverWait(driver, 10).until(
                     EC.presence_of_element_located((By.CLASS_NAME, "uportal-table"))
@@ -83,15 +80,12 @@ class Course:
                         label = data_cells[4].text.strip()
                         grade = float(data_cells[5].text.strip())
                         grades[label] = grade
-                except:
-                    continue
+                except Exception as e:
+                    print(e)
 
         except Exception as e:
             print(e)
         return grades
-    
-    def get_final(self):
-        self.final = 0
 
     def formating(self): # formatēšanas metode priekš txt faila
         avg_grade = round(sum(self.grades.values()) / len(self.grades), 2) if self.grades else 0
@@ -107,30 +101,40 @@ class Course:
 
 class DatuStrukturas(Course):
     def calculate_final(self):
-        L = [self.grades.get("Laboratorijas darbs Nr.1 (izpildīt klasē)"),
-             self.grades.get("Uzdevums Nr.3 (Hash Table)"),
-             self.grades.get("Patstavīgais darbs Nr.1"),
-             self.grades.get("Laboratorijas darbs Nr.2 (atzīmes)"),
-             self.grades.get("Paškontroles uzdevums Nr.3 (iesniegt TIKAI 1. un 2. grupai) (1. & 2. daļa, papilduzdevums; atzīmes)")]
-        Z = [self.grades.get("Zināšanu pārbaudes tests (18.03.2025)"),
-             self.grades.get("2. Zināšanu pārbaude")]
-        E = self.grades.get("Eksāmens")
+        print(self.grades)
+        L = [self.grades.get("Laboratorijas darbs Nr.1 (izpildīt klasē)", 0),
+             self.grades.get("Uzdevums Nr.3 (Hash Table)", 0),
+             self.grades.get("Patstavīgais darbs Nr.1", 0),
+             self.grades.get("Laboratorijas darbs Nr.2 (atzīmes)", 0),
+             self.grades.get("Paškontroles uzdevums Nr.3 (iesniegt TIKAI 1. un 2. grupai) (1. & 2. daļa, papilduzdevums; atzīmes)", 0)]
+        print(L)
+        Z = [self.grades.get("Zināšanu pārbaudes tests (18.03.2025)", 0),
+             self.grades.get("2. Zināšanu pārbaude", 0)]
+        print(Z)
+        E = self.grades.get("Eksāmens", 0)
+        print(E)
         L = statistics.fmean(L)
+        print(L)
         Z = statistics.fmean(Z)
+        print(Z)
         groups = [L, Z, E]
         weights = [0.3, 0.3, 0.4]
-        self.final_grade = statistics.fmean(groups, weights)
+        final = statistics.fmean(groups, weights)
+        return final
 
 
 class DiskretaMatematika(Course):
     def calculate_final(self):
-        K1 = self.grades.get("Kontroldarbs Nr 1", 0)
-        K2 = self.grades.get("Kontroldarbs Nr 2", 0)
-        K3 = self.grades.get("Kontroldarbs Nr 3", 0)
+        K = [self.grades.get("Kontroldarbs Nr 1", 0),
+             self.grades.get("Kontroldarbs Nr 2", 0),
+             self.grades.get("Kontroldarbs Nr 3", 0)]
         M = self.grades.get("Mājasdarbi", 0)
-        T = self.grades.get("Testi", 0)
+        T = [self.grades.get("2025.g. Tests 1.1 \"Darbības ar kopām\" ( OBLIGĀTAIS ) - līdz 15.03.2025", 0),
+             self.grades.get("Tests 2", 0),
+             self.grades.get("Testi", 0),
+             self.grades.get("Testi", 0)]
         E = self.grades.get("Eksāmens", 0)
-        K = (K1 + K2 + K3) / 3 if (K1 and K2 and K3) else 0
+        K = statistics.fmean(K)
 
         if K1 < 4 or K2 < 4 or K3 < 4:
             self.final_grade = round(0.5 * E + 0.3 * K + 0.1 * M + 0.1 * T, 2)
@@ -187,19 +191,19 @@ def save_course_table(courses, filename="final_grades.txt"):
         f.write(f"{'Course Name':<30} | {'Final Grade':<11}\n")
         f.write("-" * 60 + "\n")
         for course in courses:
-            f.write(course.name  + " " * 10 + course.final + "\n")
+            f.write(course.name  + " " * 10 + str(course.calculate_final()) + "\n")
         # Vidējā gala atzīme
-        avg_final = round(sum(c.final_grade for c in courses) / len(courses), 2) if courses else 0
-        f.write("\n")
-        f.write(f"Kopējā vidējā gala atzīme: {avg_final}\n")
+        #avg_final = round(sum(c.calculate_final() for c in courses) / len(courses), 2) if courses else 0
+        #f.write("\n")
+        #f.write(f"Kopējā vidējā gala atzīme: {avg_final}\n")
 
 courses = [
-    DatuStrukturas(680502, "cat_579793"),
-    DiskretaMatematika(695121, "cat_636085"),
-    Fizika(680310, "cat_579789"),
-    Matematika(680369, "cat_579791"),
-    OOP(680366, "cat_579790"),
-    Vides_un_klimata_celvedis(680306, "cat_579788"),
+    DatuStrukturas(680502, "cat_579793")
+    #DiskretaMatematika(695121, "cat_636085"),
+    #Fizika(680310, "cat_579789"),
+    #Matematika(680369, "cat_579791"),
+    #OOP(680366, "cat_579790"),
+    #Vides_un_klimata_celvedis(680306, "cat_579788"),
 ]
        
 save_course_table(courses)
