@@ -1,33 +1,81 @@
-# OrtusProject
+# RTU eStudijas Datorsistēmas fakultātes atzīmju apstrādes rīks
 
-### TODO:
+## Projekta uzdevums
 
+Šī Python programma ir izstrādāta, lai automatizētu Rīgas Tehniskās universitātes (RTU) e-studiju platformas studiju kursu gala vērtējumu iegūšanu, aprēķināšanu un analīzi.
 
+Programmas mērķis ir:
 
+- Automātiski pieslēgties eStudijas platformai, izmantojot Selenium bibliotēku;
+- Nolasīt katra kursa vērtējumus, tos apstrādāt saskaņā ar kursa specifisko vērtēšanas loģiku;
+- Aprēķināt gala atzīmes, pamatojoties uz kursa specifiskiem vērtēšanas kritērijiem;
+- Saglabāt gala atzīmes strukturētā teksta failā.
 
-... nolasīt kursa nosaukumu, ieiet vērtējumu sadaļā, nolasīt visas vērtējumu skalas, ierakstīt tabulā ar aprakstiem.
+Katrs kurss satur atšķirīgus vērtēšanas komponentus – kontroldarbi, laboratorijas darbi, eksāmeni u.c. –, un šis rīks ļauj tos novērtēt pēc svara, kā arī nodrošina vienotu gala atzīmes aprēķinu.
 
+---
 
-... noteikt katram kursam, kur iespējams, gala vērtējuma aprēķināšanas formulas, salikt metodēs.
+## Izmantotās Python bibliotēkas
 
+| Bibliotēka          | Iemesls izmantošanai                                                                 |
+|---------------------|--------------------------------------------------------------------------------------|
+| `os`                | Lai piekļūtu `.env` failam un sistēmas mainīgajiem (lietotājvārds un parole).       |
+| `statistics`        | Vidējo vērtību un gala atzīmju aprēķins pēc dažādiem svara koeficientiem.           |
+| `re`                | Regulāro izteiksmju izmantošanai, piemēram, lai atrastu kursa kodu nosaukumā.       |
+| `selenium`          | Automatizētai mijiedarbībai ar RTU e-studiju tīmekļa vietni.                        |
+| `dotenv (load_dotenv)` | Drošai autentifikācijas datu uzglabāšanai ārpus koda.                           |
 
-jāizdomā, kā pāradresēt get_final funkciju katram kursam, atkarībā no tā nosaukuma (vai cita kritērija).
+---
 
+## Izmantotās datu struktūras
 
-jāpievieno grades vārdnīcai eksāmena rezultātus no mācības sadaļas.
+Projekta izveidē tika izmantotas sekojošas datu struktūras:
 
+- **Klase `Course`**: Bāzes klase, kas satur vispārīgās metodes un atribūtus visiem kursiem – `id`, `classname`, `name`, `code`, `grades`, u.c.
+- **Atvasinātās klases**: `DatuStrukturas`, `DiskretaMatematika`, `Fizika`, `Matematika`, `OOP`, `Vides_un_klimata_celvedis` – katrā klasē implementēta specifiska gala atzīmes aprēķināšanas loģika, kas atšķiras atkarībā no kursa prasībām.
+- **Vārdnīcas (`dict`)**: Kursu atzīmes tiek glabātas kā atslēga-vērtība pāri, kur atslēga ir vērtēšanas uzdevuma nosaukums, bet vērtība – iegūtā atzīme.
+- **Saraksti (`list`)**: Katrs vērtēšanas posms (piem., laboratorijas darbi, testi) tiek apkopots sarakstā, kuru pēc tam analizē statistiski.
 
-jāaprēķina gala atzīmes, izmantojot grades vārdnīcu. (Atsevišķas metodas katram zināmam kursam).
+> Katrai klasei (piemēram, `DatuStrukturas`, `DiskretaMatematika`) ir sava `calculate_final()` metode, kas atbilst RTU konkrētā kursa vērtēšanas struktūrai.
 
+---
 
-jāuztaisa metodi, kura ieraksta visus objektus teksta failā, ar kursa nosaukumu, gala vērtējumu. Turpat beigās jāieraksta kopējo vidējo atzīmi.
+## Programmatūras izmantošana
 
+Lai palaistu šo programmu:
 
-jāuztaisa avg funkciju priekš visu objektu vidējās atzīmes.
+1. Instalējiet nepieciešamās bibliotēkas:
 
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-pēdējiem soļiem, iespējams, vajadzēs izveidot masīvu ar Course klases objektiem.
+2. Izveidojiet `.env` failu tajā pašā direktorijā ar šādu saturu:
 
+    ```dotenv
+    login_name=JŪSU_LIETOTĀJVĀRDS
+    password=JŪSU_PAROLE
+    ```
 
+3. Programma izpilda šādas darbības:
 
-#### Jāapraksta programmas darbību šajā failā))))
+    - Atver Firefox pārlūku un pieslēdzas RTU eStudijas sistēmai.
+    - Nolasa katra kursa lapu un saglabā atzīmes.
+    - Aprēķina gala atzīmi, pamatojoties uz kursa īpašiem vērtēšanas kritērijiem.
+    - Saglabā gala atzīmes failā `final_grades.txt`.
+
+---
+
+## Ievērībai
+
+- Katra kursa vērtējumi tiek nolasīti no e-studiju portāla un tiek apstrādāti atbilstoši kursa struktūrai.
+- Ja kāda atzīme nav pieejama, tiek uzskatīts, ka tā ir 0.
+- Pēc kursu gala vērtējumu iegūšanas tiek aprēķināta arī kopējā vidējā atzīme.
+
+---
+
+## Faila struktūra
+
+- **`Course` klase** – pamata datu struktūra, nodrošina kursa informācijas ielādi un vērtējumu nolasīšanu.
+- Katrs kurss (piemēram, `Matematika`, `Fizika`) ir definēts kā atsevišķa klase ar savu aprēķinu loģiku.
+- **`save_course_table()` funkcija** – saglabā gala atzīmes failā.
