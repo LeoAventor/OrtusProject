@@ -23,26 +23,14 @@ password_field.send_keys(os.environ.get("password"))
 submit_button = driver.find_element(By.NAME, "Login.Submit")
 submit_button.click()
 
-course_link = ["https://estudijas.rtu.lv/course/view.php?id=680502",
-                "https://estudijas.rtu.lv/course/view.php?id=695121",
-                "https://estudijas.rtu.lv/course/view.php?id=680310",
-                "https://estudijas.rtu.lv/course/view.php?id=680369",
-                "https://estudijas.rtu.lv/course/view.php?id=680366",
-                "https://estudijas.rtu.lv/course/view.php?id=680306"]
+#course_link = f"https://estudijas.rtu.lv/course/view.php?id={self.id}}"
 
-grade_links = ["https://estudijas.rtu.lv/grade/report/user/index.php?id=680502",
-               "https://estudijas.rtu.lv/grade/report/user/index.php?id=695121",
-               "https://estudijas.rtu.lv/grade/report/user/index.php?id=680310",
-               "https://estudijas.rtu.lv/grade/report/user/index.php?id=680369",
-               "https://estudijas.rtu.lv/grade/report/user/index.php?id=680366",
-               "https://estudijas.rtu.lv/grade/report/user/index.php?id=680306"]
-
-#driver.quit()
+#grade_links = f"https://estudijas.rtu.lv/grade/report/user/index.php?id={self.id}"
 
 class Course:
     
-    def __init__(self, url, classname):
-        self.url = url
+    def __init__(self, id, classname):
+        self.id = id
         self.classname = classname
         self.name = self.get_name()
         self.code = self.get_code()
@@ -54,11 +42,12 @@ class Course:
     def get_name(self):
         driver.get("https://estudijas.rtu.lv/my/index.php")
         name = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, f"//a[@href='{self.url}']"))
+            EC.presence_of_element_located((By.XPATH, f"//a[@href='https://estudijas.rtu.lv/course/view.php?id={self.id}']"))
         ).text
         return name
     
     def get_grades(self):
+        driver.get(f"https://estudijas.rtu.lv/grade/report/user/index.php?id={self.id}")
         grade_table = WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.CLASS_NAME, self.classname))
         )
@@ -68,7 +57,7 @@ class Course:
 
         for row in rows:
             try:
-                label = row.find_element(By.CLASS_NAME, "gradeitemheader").text
+                label = row.find_element(By.CLASS_NAME, "gradeitemheader").text.strip()
                 grade_text = WebDriverWait(driver, 10).until(
                     EC.presence_of_element_located((By.XPATH, "//*[@headers='grade']"))
                 ).strip()
@@ -79,20 +68,23 @@ class Course:
                 grades[label] = grade
             except:
                 continue
-        
-        driver.get("https://ortus.rtu.lv/f/u108l1s22/normal/render.uP")
+        driver.get("https://ortus.rtu.lv/f/u108l1s22/normal/render.uP?pCt=rtu-eusso-studijas-info.u108l1n151")
+        driver.find_element(By.XPATH, f"//a[@href='https://ortus.rtu.lv/f/u108l1s22/p/rtu-eusso-studijas-info.u108l1n151/normal/action.uP?pP_action=info&pP_page=6']").click()
         try:
             grade_table = WebDriverWait(driver, 10).until(
                     EC.presence_of_element_located((By.CLASS_NAME, "uportal-table"))
                 )
             subjects = grade_table.find_elements(By.TAG_NAME, "tr")
             for subject in subjects:
-                data_cells = subjects.find_elements(By.TAG_NAME, "td")
-                code = data_cells[0].text.strip()
-                if code == self.code:
-                    label = data_cells[4].text
-                    grade = float(data_cells[5].text.strip())
-                    grades[label] = grade
+                try:
+                    data_cells = subject.find_elements(By.TAG_NAME, "td")
+                    code = data_cells[0].text.strip()
+                    if code == self.code:
+                        label = data_cells[4].text.strip()
+                        grade = float(data_cells[5].text.strip())
+                        grades[label] = grade
+                except:
+                    continue
 
         except Exception as e:
             print(e)
@@ -103,12 +95,12 @@ class Course:
 
     def formating(self): # formatēšanas metode priekš txt faila
         avg_grade = round(sum(self.grades.values()) / len(self.grades), 2) if self.grades else 0
-        return f"{self.name:<25} | {avg_grade:<13} | {self.final_grade:<11}"
+        return f"{self.name:<25} | {avg_grade:<13} | {self.final:<11}"
     
     def get_code(self):
-        code = re.search(r"\([A-Z]{2}\d{4}\)",)
+        code = re.search(r"\([A-Z]{2}\d{4}\)", self.name)
         if code:
-            code = code.group(1)
+            code = code.group(0)
         else:
             code = "-"
         return code
@@ -123,7 +115,9 @@ class DatuStrukturas(Course):
         Z = [self.grades.get("Zināšanu pārbaudes tests (18.03.2025)"),
              self.grades.get("2. Zināšanu pārbaude")]
         E = self.grades.get("Eksāmens")
-        groups = [sum(L), sum(Z), E]
+        L = statistics.fmean(L)
+        Z = statistics.fmean(Z)
+        groups = [L, Z, E]
         weights = [0.3, 0.3, 0.4]
         self.final_grade = statistics.fmean(groups, weights)
 
@@ -190,32 +184,26 @@ class Vides_un_klimata_celvedis(Course):
 
 def save_course_table(courses, filename="final_grades.txt"):
     with open(filename, "w", encoding='utf-8') as f:
-        f.write(f"{'Course Name':<30} | {'Average Grade':<13} | {'Final Grade':<11}\n")
+        f.write(f"{'Course Name':<30} | {'Final Grade':<11}\n")
         f.write("-" * 60 + "\n")
         for course in courses:
-            f.write(course.to_row() + "\n")
+            f.write(course.name  + " " * 10 + course.final + "\n")
         # Vidējā gala atzīme
         avg_final = round(sum(c.final_grade for c in courses) / len(courses), 2) if courses else 0
         f.write("\n")
         f.write(f"Kopējā vidējā gala atzīme: {avg_final}\n")
 
-def main():
-    courses = [
-        DatuStrukturas("https://estudijas.rtu.lv/grade/report/user/index.php?id=680502", "cat_579793"),
-        DiskretaMatematika("https://estudijas.rtu.lv/grade/report/user/index.php?id=695121", "cat_636085"),
-        Fizika("https://estudijas.rtu.lv/grade/report/user/index.php?id=680310", "cat_579789"),
-        Matematika("https://estudijas.rtu.lv/grade/report/user/index.php?id=680369", "cat_579791"),
-        OOP("https://estudijas.rtu.lv/grade/report/user/index.php?id=680366", "cat_579790"),
-        Vides_un_klimata_celvedis("https://estudijas.rtu.lv/grade/report/user/index.php?id=680306", "cat_579788"),
-    ]
+courses = [
+    DatuStrukturas(680502, "cat_579793"),
+    DiskretaMatematika(695121, "cat_636085"),
+    Fizika(680310, "cat_579789"),
+    Matematika(680369, "cat_579791"),
+    OOP(680366, "cat_579790"),
+    Vides_un_klimata_celvedis(680306, "cat_579788"),
+]
        
-    save_course_table(courses)
+save_course_table(courses)
 
 
+#driver.quit()
 
-
-
-
-
-        
-        
