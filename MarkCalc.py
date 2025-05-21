@@ -1,4 +1,6 @@
 import os
+import statistics
+import re
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -43,9 +45,10 @@ class Course:
         self.url = url
         self.classname = classname
         self.name = self.get_name()
+        self.code = self.get_code()
         self.grades = self.get_grades()
         #self.final = self.get_final()
-        self.final = 0
+        self.final = 0.0
 
 
     def get_name(self):
@@ -59,7 +62,7 @@ class Course:
         grade_table = WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.CLASS_NAME, self.classname))
         )
-        rows = grade_table.find_elements(By.CSS_SELECTOR, "tr")
+        rows = grade_table.find_elements(By.TAG_NAME, "tr")
         
         grades = {}
 
@@ -68,11 +71,31 @@ class Course:
                 label = row.find_element(By.CLASS_NAME, "gradeitemheader").text
                 grade_text = WebDriverWait(driver, 10).until(
                     EC.presence_of_element_located((By.XPATH, "//*[@headers='grade']"))
-                )
-                grade = float(grade_text.replace(',', '.')) if grade_text else 0.0
+                ).strip()
+                if grade_text=="Ieskaitīts":
+                    grade = 10.0
+                else:
+                    grade = float(grade_text.replace(',', '.')) if grade_text else 0.0
                 grades[label] = grade
             except:
                 continue
+        
+        driver.get("https://ortus.rtu.lv/f/u108l1s22/normal/render.uP")
+        try:
+            grade_table = WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.CLASS_NAME, "uportal-table"))
+                )
+            subjects = grade_table.find_elements(By.TAG_NAME, "tr")
+            for subject in subjects:
+                data_cells = subjects.find_elements(By.TAG_NAME, "td")
+                code = data_cells[0].text.strip()
+                if code == self.code:
+                    label = data_cells[4].text
+                    grade = float(data_cells[5].text.strip())
+                    grades[label] = grade
+
+        except Exception as e:
+            print(e)
         return grades
     
     def get_final(self):
@@ -82,13 +105,27 @@ class Course:
         avg_grade = round(sum(self.grades.values()) / len(self.grades), 2) if self.grades else 0
         return f"{self.name:<25} | {avg_grade:<13} | {self.final_grade:<11}"
     
+    def get_code(self):
+        code = re.search(r"\([A-Z]{2}\d{4}\)",)
+        if code:
+            code = code.group(1)
+        else:
+            code = "-"
+        return code
 
 class DatuStrukturas(Course):
     def calculate_final(self):
-        L = self.grades.get("Laboratorijas darbi", 0)
-        Z = self.grades.get("Zināšanas pārbaude", 0)
-        E = self.grades.get("Eksāmens", 0)
-        self.final_grade = round(0.3 * L + 0.3 * Z + 0.4 * E, 2)
+        L = [self.grades.get("Laboratorijas darbs Nr.1 (izpildīt klasē)"),
+             self.grades.get("Uzdevums Nr.3 (Hash Table)"),
+             self.grades.get("Patstavīgais darbs Nr.1"),
+             self.grades.get("Laboratorijas darbs Nr.2 (atzīmes)"),
+             self.grades.get("Paškontroles uzdevums Nr.3 (iesniegt TIKAI 1. un 2. grupai) (1. & 2. daļa, papilduzdevums; atzīmes)")]
+        Z = [self.grades.get("Zināšanu pārbaudes tests (18.03.2025)"),
+             self.grades.get("2. Zināšanu pārbaude")]
+        E = self.grades.get("Eksāmens")
+        groups = [sum(L), sum(Z), E]
+        weights = [0.3, 0.3, 0.4]
+        self.final_grade = statistics.fmean(groups, weights)
 
 
 class DiskretaMatematika(Course):
