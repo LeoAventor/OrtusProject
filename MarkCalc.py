@@ -27,6 +27,21 @@ submit_button.click()
 
 #grade_links = f"https://estudijas.rtu.lv/grade/report/user/index.php?id={self.id}"
 
+exams = {}
+driver.get("https://ortus.rtu.lv/f/u108l1s22/normal/render.uP?pCt=rtu-eusso-studijas-info.u108l1n151")
+driver.find_element(By.XPATH, f"//a[@href='/f/u108l1s22/p/rtu-eusso-studijas-info.u108l1n151/normal/action.uP?pP_action=info&pP_page=6']").click()
+grade_table = driver.find_element(By.CLASS_NAME, "uportal-table")
+subjects = grade_table.find_elements(By.TAG_NAME, "tr")
+for subject in subjects:
+    try:
+        data_cells = subject.find_elements(By.TAG_NAME, "td")
+        code = data_cells[0].text.strip()
+        grade = float(data_cells[5].text.strip())
+        exams[code] = grade
+    except Exception as e:
+        print(e)
+#print(exams)
+
 class Course:
     
     def __init__(self, id, classname):
@@ -47,17 +62,13 @@ class Course:
     def get_grades(self):
         driver.get(f"https://estudijas.rtu.lv/grade/report/user/index.php?id={self.id}")
         rows = driver.find_elements(By.CLASS_NAME, self.classname)
-        print(grade_table)
         
         grades = {}
 
         for row in rows:
             try:
                 label = row.find_element(By.CLASS_NAME, "gradeitemheader").text.strip()
-                grade_text = WebDriverWait(driver, 10).until(
-                    EC.presence_of_element_located((By.XPATH, "//*[@headers='grade']"))
-                ).text.strip()
-                print(label, grade_text)
+                grade_text = row.find_element(By.XPATH, ".//td[contains(@headers, 'grade')]").text.strip()
                 if grade_text=="Ieskaitīts":
                     grade = 10.0
                 else:
@@ -65,31 +76,14 @@ class Course:
                 grades[label] = grade
             except Exception as e:
                 print(e)
-        driver.get("https://ortus.rtu.lv/f/u108l1s22/normal/render.uP?pCt=rtu-eusso-studijas-info.u108l1n151")
-        driver.find_element(By.XPATH, f"//a[@href='/f/u108l1s22/p/rtu-eusso-studijas-info.u108l1n151/normal/action.uP?pP_action=info&pP_page=6']").click()
-        try:
-            grade_table = WebDriverWait(driver, 10).until(
-                    EC.presence_of_element_located((By.CLASS_NAME, "uportal-table"))
-                )
-            subjects = grade_table.find_elements(By.TAG_NAME, "tr")
-            for subject in subjects:
-                try:
-                    data_cells = subject.find_elements(By.TAG_NAME, "td")
-                    code = data_cells[0].text.strip()
-                    if code == self.code:
-                        label = data_cells[4].text.strip()
-                        grade = float(data_cells[5].text.strip())
-                        grades[label] = grade
-                except Exception as e:
-                    print(e)
-
-        except Exception as e:
-            print(e)
+        for exam in exams:
+            if exam in self.code:
+                grades["Eksāmens"] = exams[exam]
         return grades
 
     def formating(self): # formatēšanas metode priekš txt faila
         avg_grade = round(sum(self.grades.values()) / len(self.grades), 2) if self.grades else 0
-        return f"{self.name:<25} | {avg_grade:<13} | {self.final:<11}"
+        return f"{self.name:<25} | {avg_grade:<13}"
     
     def get_code(self):
         code = re.search(r"\([A-Z]{2}\d{4}\)", self.name)
@@ -101,22 +95,18 @@ class Course:
 
 class DatuStrukturas(Course):
     def calculate_final(self):
-        print(self.grades)
+        #print(self.grades)
         L = [self.grades.get("Laboratorijas darbs Nr.1 (izpildīt klasē)", 0),
              self.grades.get("Uzdevums Nr.3 (Hash Table)", 0),
              self.grades.get("Patstavīgais darbs Nr.1", 0),
              self.grades.get("Laboratorijas darbs Nr.2 (atzīmes)", 0),
              self.grades.get("Paškontroles uzdevums Nr.3 (iesniegt TIKAI 1. un 2. grupai) (1. & 2. daļa, papilduzdevums; atzīmes)", 0)]
-        print(L)
         Z = [self.grades.get("Zināšanu pārbaudes tests (18.03.2025)", 0),
-             self.grades.get("2. Zināšanu pārbaude", 0)]
-        print(Z)
+             self.grades.get("2. Zināšanu pārbaude", 0),
+             self.grades.get("Projekts (jāiesniedz GitHub saite un autoru vārdi)", 0)]
         E = self.grades.get("Eksāmens", 0)
-        print(E)
         L = statistics.fmean(L)
-        print(L)
         Z = statistics.fmean(Z)
-        print(Z)
         groups = [L, Z, E]
         weights = [0.3, 0.3, 0.4]
         final = statistics.fmean(groups, weights)
