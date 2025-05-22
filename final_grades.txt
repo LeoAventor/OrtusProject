@@ -1,3 +1,12 @@
-Course Name                    | Final Grade
+Kursa nosaukums                               | Gala atzīme
 ------------------------------------------------------------
-Datu struktūras un algoritmi(1) (DE0918)          3.5
+Datu struktūras un algoritmi(1) (DE0918)      | 3.5        
+Diskrētā matemātika(1) (DE0132)               | 1.98       
+Fizika(1) (DA0101)                            | 0.51       
+Matemātika(2) (DE0028)                        | 1.64       
+Objektorientētā programmēšana(1) (DE0008)     | 3.41       
+Vides un klimata ceļvedis(1) (DA0055)         | 8.49       
+-----------------------------------------------------------
+Kopējā vidējā gala atzīme:                    | 3.3        
+-----------------------------------------------------------
+Atzīme pēc noapaļotām vērtībām:               | 3
