@@ -9,8 +9,6 @@ from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from dotenv import load_dotenv
 
 
-#courses={"Datu struktūras un algoritmi":{}, "Diskrētā matemātika":{}, "Fizika":{}, "Matemātika":{}, "Objektorientētā programmēšana":{}, "Vides un klimata ceļvedis":{}}
-
 firefox_options = FirefoxOptions()
 firefox_options.add_argument("--headless")
 driver = webdriver.Firefox(options=firefox_options)
@@ -94,7 +92,6 @@ class Course:
 
 class DatuStrukturas(Course):
     def calculate_final(self):
-        #print(self.grades)
         L = [self.grades.get("Laboratorijas darbs Nr.1 (izpildīt klasē)", 0),
              self.grades.get("Uzdevums Nr.3 (Hash Table)", 0),
              self.grades.get("Patstavīgais darbs Nr.1", 0),
